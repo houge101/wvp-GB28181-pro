@@ -314,7 +314,6 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                 String username = sdp.getOrigin().getUsername();
                 String addressStr = sdp.getConnection().getAddress();
 
-
                 Device device = null;
                 // 通过 channel 和 gbStream 是否为null 值判断来源是直播流合适国标
                 if (channel != null) {

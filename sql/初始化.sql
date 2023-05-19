@@ -279,6 +279,42 @@ create table wvp_user_role (
                                update_time character varying(50)
 );
 
+create table wvp_onvif_device (
+                            id integer primary key ,
+                            name character varying(255),
+                            direct_connection bool default true,
+                            create_time character varying(50),
+                            update_time character varying(50)
+);
+
+
+create table wvp_onvif_device_channel (
+                                          id serial primary key ,
+                                          device_id integer ,
+                                          name character varying(255),
+                                          status bool default true,
+                                          gb_id character varying(50),
+                                          ip character varying(50),
+                                          port integer,
+                                          username character varying(50),
+                                          password character varying(50),
+                                          manufacturer character varying(100),
+                                          model character varying(100),
+                                          firmware_version character varying(100),
+                                          serial_number character varying(255),
+                                          hardware_id character varying(255),
+                                          date character varying(50),
+                                          live_stream_tcp character varying(50),
+                                          live_stream_udp character varying(50),
+                                          live_stream_multicast character varying(50),
+                                          replay_stream character varying(50),
+                                          longitude double precision,
+                                          latitude double precision,
+                                          create_time character varying(50),
+                                          update_time character varying(50),
+                                          constraint uk_onvif_device_channel_ip_port unique (ip, port)
+);
+
 /*初始数据*/
 INSERT INTO wvp_user VALUES (1, 'admin','21232f297a57a5a743894a0e4a801fc3',1,'2021-04-13 14:14:57','2021-04-13 14:14:57','3e80d1762a324d5b0ff636e0bd16f1e3');
 INSERT INTO wvp_user_role VALUES (1, 'admin','0','2021-04-13 14:14:57','2021-04-13 14:14:57');

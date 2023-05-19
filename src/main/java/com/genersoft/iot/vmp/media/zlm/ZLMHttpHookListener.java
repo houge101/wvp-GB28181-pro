@@ -385,7 +385,7 @@ public class ZLMHttpHookListener {
                             zlmMediaListManager.removeMedia(param.getApp(), param.getStream());
                         }
                         GbStream gbStream = storager.getGbStream(param.getApp(), param.getStream());
-                        if (gbStream != null) {
+                        if (gbStream != null && userSetting.isUsePushingAsStatus()) {
                             eventPublisher.catalogEventPublishForStream(null, gbStream, param.isRegist()?CatalogEvent.ON:CatalogEvent.OFF);
                         }
                         if (type != null) {

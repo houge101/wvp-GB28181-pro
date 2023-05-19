@@ -111,7 +111,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 .antMatchers(userSetting.getInterfaceAuthenticationExcludes().toArray(new String[0])).permitAll()
-                .antMatchers("/api/user/login","/index/hook/**","/zlm_Proxy/FhTuMYqB2HeCuNOb/record/t/1/2023-03-25/16:35:07-16:35:16-9353.mp4").permitAll()
+                .antMatchers("/api/user/login","/index/hook/**","/onvif/**").permitAll()
                 .anyRequest().authenticated()
                 // 异常处理器
                 .and()
