@@ -116,8 +116,8 @@ public class OnvifServiceImpl implements IOnvifService {
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "用户名或密码为空");
         }
 
-        if (!onvifDeviceChannel.getUsername().equals(username)
-                || !onvifDeviceChannel.getPassword().equals(password) ) {
+        if (!username.equals(onvifDeviceChannel.getUsername())
+                || !password.equals(onvifDeviceChannel.getPassword()) ) {
             onvifDeviceChannel.setUsername(username);
             onvifDeviceChannel.setPassword(password);
             onvifDeviceChannel.setUpdateTime(DateUtil.getNow());
@@ -200,5 +200,15 @@ public class OnvifServiceImpl implements IOnvifService {
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "消息发送失败");
         }
         return asyncRemote;
+    }
+
+    @Override
+    public OnvifDevice getDevice(int id) {
+        return onvifDeviceMapper.getOne(id);
+    }
+
+    @Override
+    public OnvifDeviceChannel getChannel(int id) {
+        return onvifChanelMapper.getOne(id);
     }
 }

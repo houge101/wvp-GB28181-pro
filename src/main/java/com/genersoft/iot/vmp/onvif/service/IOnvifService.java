@@ -25,4 +25,7 @@ public interface IOnvifService {
 
     void initDeviceStatus();
 
+    OnvifDevice getDevice(int id);
+
+    OnvifDeviceChannel getChannel(int id);
 }

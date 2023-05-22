@@ -49,7 +49,13 @@ public class WebsocketMessageHandler {
                 onvifDeviceChannel.setDeviceId(deviceId);
                 onvifDeviceChannel.setCreateTime(DateUtil.getNow());
                 onvifDeviceChannel.setUpdateTime(DateUtil.getNow());
-                onvifService.addChannel(onvifDeviceChannel);
+                OnvifDeviceChannel channel = onvifService.getChannelByIpAndPort(onvifDeviceChannel.getIp(), onvifDeviceChannel.getPort());
+                if (channel == null) {
+                    onvifService.addChannel(onvifDeviceChannel);
+                }else {
+                    onvifService.updateChannel(onvifDeviceChannel);
+                }
+
                 break;
             case CAMERA_INFO:
                 logger.info("[onvif 消息处理] 摄像头详情：id: {}, 详情：{} ", deviceId, data);

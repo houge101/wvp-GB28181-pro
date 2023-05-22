@@ -4,7 +4,9 @@ import Layout from "../layout/index.vue"
 
 import console from '../components/console.vue'
 import deviceList from '../components/DeviceList.vue'
+import onvifDeviceList from '../components/OnvifDeviceList.vue'
 import channelList from '../components/channelList.vue'
+import onvifChannelList from '../components/OnvifChannelList.vue'
 import gbRecordDetail from '../components/GBRecordDetail.vue'
 import pushVideoList from '../components/PushVideoList.vue'
 import streamProxyList from '../components/StreamProxyList.vue'
@@ -53,6 +55,10 @@ export default new VueRouter({
           component: deviceList,
         },
         {
+          path: '/onvifDeviceList',
+          component: onvifDeviceList,
+        },
+        {
           path: '/pushVideoList',
           component: pushVideoList,
         },
@@ -64,6 +70,11 @@ export default new VueRouter({
           path: '/channelList/:deviceId/:parentChannelId/',
           name: 'channelList',
           component: channelList,
+        },
+        {
+          path: '/onvifChannelList/:onvifDeviceId/',
+          name: 'onvifChannelList',
+          component: onvifChannelList,
         },
         {
           path: '/gbRecordDetail/:deviceId/:channelId/',

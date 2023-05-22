@@ -1,6 +1,5 @@
 package com.genersoft.iot.vmp.onvif.dao;
 
-import com.genersoft.iot.vmp.onvif.bean.OnvifDevice;
 import com.genersoft.iot.vmp.onvif.bean.OnvifDeviceChannel;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -14,7 +13,7 @@ import java.util.List;
 @Repository
 public interface OnvifChanelMapper {
 
-    @Insert("INSERT INTO wvp_onvif_device (" +
+    @Insert("INSERT INTO wvp_onvif_device_channel (" +
             "device_id, " +
             "name, " +
             "status, " +

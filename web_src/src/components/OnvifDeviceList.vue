@@ -1,0 +1,313 @@
+<template>
+  <div id="app" style="width: 100%">
+    <div class="page-header">
+      <div class="page-title">Onvif设备列表</div>
+      <div class="page-header-btn">
+        <el-button icon="el-icon-refresh-right" circle size="mini" :loading="getOnvifDeviceListLoading"
+                   @click="getOnvifDeviceList()"></el-button>
+      </div>
+    </div>
+    <!--设备列表-->
+    <el-table :data="onvifDeviceList" style="width: 100%;font-size: 12px;" :height="winHeight" header-row-class-name="table-header">
+      <el-table-column prop="id" label="ID" min-width="160">
+      </el-table-column>
+      <el-table-column prop="name" label="名称" min-width="160">
+      </el-table-column>
+      <el-table-column label="模式" min-width="160" >
+        <template slot-scope="scope">
+          <div slot="reference" class="name-wrapper">
+            <el-tag size="medium">{{ scope.row.directConnection? "直连":"局域网模式" }}</el-tag>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" min-width="120">
+        <template slot-scope="scope">
+          <div slot="reference" class="name-wrapper">
+            <el-tag size="medium" >{{scope.row.status?"在线":"离线"}}</el-tag>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="updateTime" label="更新时间" min-width="160" >
+      </el-table-column>
+      <el-table-column prop="createTime" label="创建时间"  min-width="160">
+      </el-table-column>
+
+      <el-table-column label="操作" min-width="450" fixed="right">
+        <template slot-scope="scope">
+          <el-divider direction="vertical"></el-divider>
+          <el-button type="text" size="medium" icon="el-icon-video-camera"
+                     @click="showChannelList(scope.row)">通道
+          </el-button>
+          <el-button size="medium" disabled icon="el-icon-delete" type="text" @click="deleteDevice(scope.row)" style="color: #f56c6c">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-pagination
+      style="float: right"
+      @size-change="handleSizeChange"
+      @current-change="currentChange"
+      :current-page="currentPage"
+      :page-size="count"
+      :page-sizes="[15, 25, 35, 50]"
+      layout="total, sizes, prev, pager, next"
+      :total="total">
+    </el-pagination>
+  </div>
+</template>
+
+<script>
+import uiHeader from '../layout/UiHeader.vue'
+
+export default {
+  name: 'app',
+  components: {
+    uiHeader
+  },
+  data() {
+    return {
+      onvifDeviceList: [], //设备列表
+      currentDevice: {}, //当前操作设备对象
+
+      videoComponentList: [],
+      updateLooper: 0, //数据刷新轮训标志
+      currentDeviceChannelsLength: 0,
+      winHeight: window.innerHeight - 200,
+      currentPage: 1,
+      count: 15,
+      total: 0,
+      getOnvifDeviceListLoading: false,
+    };
+  },
+  computed: {
+    getCurrentDeviceChannels: function () {
+      let data = this.currentDevice['channelMap'];
+      let channels = null;
+      if (data) {
+        channels = Object.keys(data).map(key => {
+          return data[key];
+        });
+        this.currentDeviceChannelsLength = channels.length;
+      }
+      return channels;
+    }
+  },
+  mounted() {
+    this.initData();
+    this.updateLooper = setInterval(this.initData, 10000);
+  },
+  destroyed() {
+    this.$destroy('videojs');
+    clearTimeout(this.updateLooper);
+  },
+  methods: {
+    initData: function () {
+      this.getOnvifDeviceList();
+    },
+    currentChange: function (val) {
+      this.currentPage = val;
+      this.getOnvifDeviceList();
+    },
+    handleSizeChange: function (val) {
+      this.count = val;
+      this.getOnvifDeviceList();
+    },
+    getOnvifDeviceList: function () {
+      this.getOnvifDeviceListLoading = true;
+      this.$axios({
+        method: 'get',
+        url: `/api/onvif/device/all`,
+        params: {
+          page: this.currentPage,
+          count: this.count
+        }
+      }).then( (res)=> {
+        if (res.data.code === 0) {
+          this.total = res.data.data.total;
+          this.onvifDeviceList = res.data.data.list;
+        }
+        this.getOnvifDeviceListLoading = false;
+      }).catch( (error)=> {
+        console.error(error);
+        this.getOnvifDeviceListLoading = false;
+      });
+    },
+    deleteDevice: function (row) {
+      let msg = "确定删除此设备？"
+      if (row.online !== 0) {
+        msg = "在线设备删除后仍可通过注册再次上线。<br/>如需彻底删除请先将设备离线。<br/><strong>确定删除此设备？</strong>"
+      }
+      this.$confirm(msg, '提示', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        center: true,
+        type: 'warning'
+      }).then(() => {
+        this.$axios({
+          method: 'delete',
+          url: `/api/device/query/devices/${row.deviceId}/delete`
+        }).then((res) => {
+          this.getOnvifDeviceList();
+        }).catch((error) => {
+          console.error(error);
+        });
+      }).catch(() => {
+
+      });
+
+
+    },
+    showChannelList: function (row) {
+      this.$router.push(`/onvifChannelList/${row.id}`);
+    },
+
+    //gb28181平台对接
+    //刷新设备信息
+    refDevice: function (itemData) {
+      console.log("刷新对应设备:" + itemData.deviceId);
+      let that = this;
+      this.$axios({
+        method: 'get',
+        url: '/api/device/query/devices/' + itemData.deviceId + '/sync'
+      }).then((res) => {
+        console.log("刷新设备结果：" + JSON.stringify(res));
+        if (res.data.code !== 0) {
+          that.$message({
+            showClose: true,
+            message: res.data.msg,
+            type: 'error'
+          });
+        } else {
+          // that.$message({
+          // 	showClose: true,
+          // 	message: res.data.msg,
+          // 	type: 'success'
+          // });
+          this.$refs.syncChannelProgress.openDialog(itemData.deviceId)
+        }
+        that.initData()
+      }).catch((e) => {
+        console.error(e)
+        that.$message({
+          showClose: true,
+          message: e,
+          type: 'error'
+        });
+      });
+
+    },
+
+    getTooltipContent: async function (deviceId) {
+      let result = "";
+      await this.$axios({
+        method: 'get',
+        async: false,
+        url: `/api/device/query/${deviceId}/sync_status/`,
+      }).then((res) => {
+        if (res.data.code == 0) {
+          if (res.data.data.errorMsg !== null) {
+            result = res.data.data.errorMsg
+          } else if (res.data.msg !== null) {
+            result = res.data.msg
+          } else {
+            result = `同步中...[${res.data.data.current}/${res.data.data.total}]`;
+          }
+        }
+      })
+      return result;
+    },
+    transportChange: function (row) {
+      console.log(`修改传输方式为 ${row.streamMode}：${row.deviceId} `);
+      let that = this;
+      this.$axios({
+        method: 'post',
+        url: '/api/device/query/transport/' + row.deviceId + '/' + row.streamMode
+      }).then(function (res) {
+
+      }).catch(function (e) {
+      });
+    },
+    edit: function (row) {
+      this.$refs.deviceEdit.openDialog(row, () => {
+        this.$refs.deviceEdit.close();
+        this.$message({
+          showClose: true,
+          message: "设备修改成功，通道字符集将在下次更新生效",
+          type: "success",
+        });
+        setTimeout(this.getOnvifDeviceList, 200)
+
+      })
+    },
+    discovery: function () {
+      this.$refs.deviceEdit.openDialog(null, () => {
+        this.$refs.deviceEdit.close();
+        this.$message({
+          showClose: true,
+          message: "添加成功",
+          type: "success",
+        });
+        setTimeout(this.getOnvifDeviceList, 200)
+
+      })
+    }
+
+
+  }
+};
+</script>
+
+<style>
+.videoList {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.video-item {
+  position: relative;
+  width: 15rem;
+  height: 10rem;
+  margin-right: 1rem;
+  background-color: #000000;
+}
+
+.video-item-img {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.video-item-img:after {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 3rem;
+  height: 3rem;
+  background-image: url("../assets/loading.png");
+  background-size: cover;
+  background-color: #000000;
+}
+
+.video-item-title {
+  position: absolute;
+  bottom: 0;
+  color: #000000;
+  background-color: #ffffff;
+  line-height: 1.5rem;
+  padding: 0.3rem;
+  width: 14.4rem;
+}
+
+</style>

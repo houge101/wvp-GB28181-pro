@@ -605,11 +605,6 @@ public class RedisCatchStorageImpl implements IRedisCatchStorage {
     @Override
     public void sendDeviceOrChannelStatus(String deviceId, String channelId, boolean online) {
         String key = VideoManagerConstants.VM_MSG_SUBSCRIBE_DEVICE_STATUS;
-        if (channelId == null) {
-            logger.info("[redis通知] 推送设备状态， {}-{}", deviceId, online);
-        }else {
-            logger.info("[redis通知] 推送通道状态， {}/{}-{}", deviceId, channelId, online);
-        }
 
         StringBuilder msg = new StringBuilder();
         msg.append(deviceId);
@@ -617,6 +612,11 @@ public class RedisCatchStorageImpl implements IRedisCatchStorage {
             msg.append(":").append(channelId);
         }
         msg.append(" ").append(online? "ON":"OFF");
+        if (channelId == null) {
+            logger.info("[redis通知] 推送设备状态， {}", msg);
+        }else {
+            logger.info("[redis通知] 推送通道状态， {}", msg);
+        }
         // 使用 RedisTemplate<Object, Object> 发送字符串消息会导致发送的消息多带了双引号
         stringRedisTemplate.convertAndSend(key, msg.toString());
     }

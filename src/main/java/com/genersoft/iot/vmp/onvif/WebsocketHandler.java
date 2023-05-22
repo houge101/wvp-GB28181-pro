@@ -3,6 +3,7 @@ package com.genersoft.iot.vmp.onvif;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.onvif.bean.OnvifDevice;
 import com.genersoft.iot.vmp.onvif.service.IOnvifService;
+import com.genersoft.iot.vmp.utils.DateUtil;
 import org.junit.jupiter.api.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,11 @@ public class WebsocketHandler {
     private static WebsocketSessionManger sessionManger;
     private static IOnvifService onvifService;
 
+
+    @Autowired
+    public void setOnvifService(IOnvifService onvifService) {
+        WebsocketHandler.onvifService = onvifService;
+    }
 
     @Autowired
     public void setUserSetting(UserSetting userSetting) {
@@ -55,9 +61,18 @@ public class WebsocketHandler {
             }
         }
         sessionManger.addSession(id, session);
-        OnvifDevice onvifDevice = new OnvifDevice();
-        onvifDevice.setId(id);
-        onvifService.addDevice(onvifDevice);
+        OnvifDevice onvifDevice = onvifService.getDevice(id);
+        if (onvifDevice == null) {
+            onvifDevice = new OnvifDevice();
+            onvifDevice.setId(id);
+            onvifDevice.setCreateTime(DateUtil.getNow());
+            onvifDevice.setUpdateTime(DateUtil.getNow());
+            onvifService.addDevice(onvifDevice);
+        }else {
+            onvifDevice.setStatus(true);
+            onvifDevice.setUpdateTime(DateUtil.getNow());
+            onvifService.updateDevice(onvifDevice);
+        }
 
     }
 
