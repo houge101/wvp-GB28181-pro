@@ -21,6 +21,11 @@ public class OnvifDevice {
      */
     private boolean directConnection;
 
+    /**
+     * 在线状态
+     */
+    private boolean status;
+
     private String createTime;
 
     private String updateTime;
@@ -73,5 +78,13 @@ public class OnvifDevice {
 
     public void setUpdateTime(String updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
     }
 }

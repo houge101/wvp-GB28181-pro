@@ -282,6 +282,7 @@ create table wvp_user_role (
 create table wvp_onvif_device (
                             id integer primary key ,
                             name character varying(255),
+                            status bool default false,
                             direct_connection bool default true,
                             create_time character varying(50),
                             update_time character varying(50)

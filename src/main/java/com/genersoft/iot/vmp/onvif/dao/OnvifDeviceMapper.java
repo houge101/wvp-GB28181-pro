@@ -18,12 +18,14 @@ public interface OnvifDeviceMapper {
             "id, " +
             "name, " +
             "direct_connection, " +
+            "status, " +
             "create_time, " +
             "update_time " +
             ") VALUES (" +
             "#{id}," +
             "#{name}," +
             "#{direct_connection}," +
+            "#{status}," +
             "#{createTime}," +
             "#{createTime}" +
             ")")
@@ -34,10 +36,22 @@ public interface OnvifDeviceMapper {
             "SET update_time=#{updateTime}" +
             "<if test=\"name != null\">, name=#{name}</if>" +
             "<if test=\"directConnection != null\">, direct_connection=#{directConnection}</if>" +
+            "<if test=\"status != null\">, status=#{status}</if>" +
             "WHERE id=#{id}"+
             " </script>"})
     void update(OnvifDevice onvifDevice);
 
     @Select("select * from wvp_onvif_device")
     List<OnvifDevice> getAll();
+
+    @Update({"<script>" +
+            "<foreach collection='onvifDevices' item='item' separator=';'>" +
+            " UPDATE" +
+            " wvp_onvif_device" +
+            " SET update_time=#{item.updateTime}" +
+            ", status=#{item.status}" +
+            "WHERE id=#{item.id}</if>" +
+            "</foreach>" +
+            "</script>"})
+    void batchUpdateStatus(List<OnvifDevice> onvifDevices);
 }

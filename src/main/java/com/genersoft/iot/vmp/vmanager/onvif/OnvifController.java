@@ -1,4 +1,4 @@
-package com.genersoft.iot.vmp.onvif.controller;
+package com.genersoft.iot.vmp.vmanager.onvif;
 
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
@@ -121,10 +121,10 @@ public class OnvifController {
 
         result.onTimeout(()->{
             logger.info("[Onvif HTTP请求] 获取通道详情超时, 设备Id：{}， 通道I的： {}", deviceId, id);
-            // 释放rtpserver
+            // 释放rtpServer
             WVPResult<StreamInfo> wvpResult = new WVPResult<>();
             wvpResult.setCode(ErrorCode.ERROR100.getCode());
-            wvpResult.setMsg("点播超时");
+            wvpResult.setMsg("获取通道详情超时");
             requestMessage.setData(wvpResult);
             resultHolder.invokeResult(requestMessage);
         });

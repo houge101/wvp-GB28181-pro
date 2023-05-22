@@ -20,4 +20,9 @@ public interface IOnvifService {
     void discovery(int deviceId);
 
     void queryChannelInfo(int deviceId, int id, String username, String password);
+
+    OnvifDeviceChannel getChannelByIpAndPort(String ip, int port);
+
+    void initDeviceStatus();
+
 }

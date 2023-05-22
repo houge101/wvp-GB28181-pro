@@ -6,6 +6,11 @@ package com.genersoft.iot.vmp.onvif.bean;
 public class OnvifDeviceChannel {
 
     /**
+     * ID
+     */
+    private int id;
+
+    /**
      * 所属的onvif设备的ID
      */
     private int deviceId;
@@ -113,6 +118,14 @@ public class OnvifDeviceChannel {
     private String createTime;
 
     private String updateTime;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public int getDeviceId() {
         return deviceId;
