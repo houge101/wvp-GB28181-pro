@@ -13,6 +13,7 @@
   </div>
   <devicePlayer ref="devicePlayer" ></devicePlayer>
   <onvifChannelEdit ref="onvifChannelEdit" ></onvifChannelEdit>
+  <onvifChannelDetails ref="onvifChannelDetails" ></onvifChannelDetails>
   <el-container v-loading="isLoging" style="height: 82vh;">
     <el-main style="padding: 5px;">
       <el-table ref="channelListTable" :data="onvifDeviceChannelList" :height="winHeight" style="width: 100%" header-row-class-name="table-header">
@@ -69,7 +70,7 @@
                        @click="stop(scope.row)">停止
             </el-button>
             <el-button size="medium" type="text" icon="el-icon-edit" @click="edit(scope.row)">编辑</el-button>
-            <el-button size="medium" type="text" icon="el-icon-edit" @click="details(scope.row)">详情</el-button>
+            <el-button size="medium" type="text" icon="el-icon-more" @click="details(scope.row)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -95,6 +96,7 @@
 import devicePlayer from './dialog/devicePlayer.vue'
 import uiHeader from '../layout/UiHeader.vue'
 import onvifChannelEdit from './dialog/onvifChannelEdit.vue'
+import onvifChannelDetails from './dialog/onvifChannelDetails.vue'
 
 export default {
   name: 'channelList',
@@ -102,6 +104,7 @@ export default {
     devicePlayer,
     uiHeader,
     onvifChannelEdit,
+    onvifChannelDetails,
   },
   data() {
     return {
@@ -220,7 +223,7 @@ export default {
     },
 
     details: function (row) {
-
+      this.$refs.onvifChannelDetails.openDialog(row)
     },
     showDevice: function () {
       this.$router.push(this.beforeUrl);
