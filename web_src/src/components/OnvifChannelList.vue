@@ -57,7 +57,8 @@
         <el-table-column label="状态" min-width="120">
           <template slot-scope="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag size="medium" >{{scope.row.status?"在线":"离线"}}</el-tag>
+              <el-tag size="medium" v-if="scope.row.status">在线</el-tag>
+              <el-tag size="medium" v-if="!scope.row.status" type="info" >离线</el-tag>
             </div>
           </template>
         </el-table-column>

@@ -21,8 +21,6 @@
           <el-descriptions-item label="国标编号" >{{channelData.gbId}}</el-descriptions-item>
           <el-descriptions-item label="制造商" >{{channelData.manufacturer}}</el-descriptions-item>
           <el-descriptions-item label="型号" >{{channelData.model}}</el-descriptions-item>
-        </el-descriptions>
-        <el-descriptions :column="2" :span="2">
           <el-descriptions-item label="固件版本" >{{channelData.firmwareVersion}}</el-descriptions-item>
           <el-descriptions-item label="序列号" >{{channelData.serialNumber}}</el-descriptions-item>
           <el-descriptions-item label="硬件Id" >{{channelData.hardwareId}}</el-descriptions-item>
@@ -34,10 +32,19 @@
           <el-descriptions-item label="更新时间" >{{channelData.updateTime}}</el-descriptions-item>
         </el-descriptions>
         <el-descriptions :column="1" :span="2">
-          <el-descriptions-item label="TCP实时流" >{{channelData.liveStreamTcp}}</el-descriptions-item>
-          <el-descriptions-item label="UDP实时流" >{{channelData.liveStreamUdp}}</el-descriptions-item>
-          <el-descriptions-item label="多播实时流" >{{channelData.liveStreamMulticast}}</el-descriptions-item>
-          <el-descriptions-item label="回放流" >{{channelData.replayStream}}</el-descriptions-item>
+          <el-descriptions-item label="TCP实时流" >
+            <el-tag size="small">{{channelData.liveStreamTcp}}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="UDP实时流" >
+            <el-tag size="small">{{channelData.liveStreamUdp}}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="多播实时流" >
+            <el-tag size="small">{{channelData.liveStreamMulticast}}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="回    放    流" >
+<!--            <el-tag size="small">{{channelData.replayStream}}</el-tag>-->
+            <el-tag size="small">暂不支持</el-tag>
+          </el-descriptions-item>
         </el-descriptions>
       </div>
     </el-dialog>

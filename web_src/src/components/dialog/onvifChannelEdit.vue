@@ -86,7 +86,8 @@ export default {
       }).then((res) => {
         console.log(res.data)
         if (res.data.code === 0) {
-          this.listChangeCallback()
+          this.listChangeCallback();
+          this.close();
         }else {
           this.$message({
             showClose: true,

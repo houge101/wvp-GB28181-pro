@@ -65,6 +65,7 @@ public class WebsocketHandler {
         if (onvifDevice == null) {
             onvifDevice = new OnvifDevice();
             onvifDevice.setId(id);
+            onvifDevice.setStatus(true);
             onvifDevice.setCreateTime(DateUtil.getNow());
             onvifDevice.setUpdateTime(DateUtil.getNow());
             onvifService.addDevice(onvifDevice);
