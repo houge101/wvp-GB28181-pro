@@ -13,7 +13,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.SIPProcessorObserver;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
-import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZLMServerFactory;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.service.IDeviceService;
 import com.genersoft.iot.vmp.service.IInviteStreamService;
@@ -66,7 +66,7 @@ public class ByeRequestProcessor extends SIPRequestProcessorParent implements In
 	private IVideoManagerStorage storager;
 
 	@Autowired
-	private ZLMRTPServerFactory zlmrtpServerFactory;
+	private ZLMServerFactory ZLMServerFactory;
 
 	@Autowired
 	private SSRCFactory ssrcFactory;
@@ -114,8 +114,8 @@ public class ByeRequestProcessor extends SIPRequestProcessorParent implements In
 				MediaServerItem mediaInfo = mediaServerService.getOne(sendRtpItem.getMediaServerId());
 				redisCatchStorage.deleteSendRTPServer(platformGbId, channelId, callIdHeader.getCallId(), null);
 				ssrcFactory.releaseSsrc(sendRtpItem.getMediaServerId(), sendRtpItem.getSsrc());
-				zlmrtpServerFactory.stopSendRtpStream(mediaInfo, param);
-				int totalReaderCount = zlmrtpServerFactory.totalReaderCount(mediaInfo, sendRtpItem.getApp(), streamId);
+				ZLMServerFactory.stopSendRtpStream(mediaInfo, param);
+				int totalReaderCount = ZLMServerFactory.totalReaderCount(mediaInfo, sendRtpItem.getApp(), streamId);
 				if (totalReaderCount <= 0) {
 					logger.info("[收到bye] {} 无其它观看者，通知设备停止推流", streamId);
 					if (sendRtpItem.getPlayType().equals(InviteStreamType.PLAY)) {

@@ -1,10 +1,7 @@
 package com.genersoft.iot.vmp.onvif.dao;
 
 import com.genersoft.iot.vmp.onvif.bean.OnvifDeviceChannel;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,7 +14,6 @@ public interface OnvifChanelMapper {
             "device_id, " +
             "name, " +
             "status, " +
-            "gb_id, " +
             "ip, " +
             "port, " +
             "username, " +
@@ -32,15 +28,12 @@ public interface OnvifChanelMapper {
             "live_stream_udp, " +
             "live_stream_multicast, " +
             "replay_stream, " +
-            "longitude, " +
-            "latitude, " +
             "create_time, " +
             "update_time " +
             ") VALUES (" +
             "#{deviceId}," +
             "#{name}," +
             "#{status}," +
-            "#{gbId}," +
             "#{ip}," +
             "#{port}," +
             "#{username}," +
@@ -55,8 +48,6 @@ public interface OnvifChanelMapper {
             "#{liveStreamUdp}," +
             "#{liveStreamMulticast}," +
             "#{replayStream}," +
-            "#{longitude}," +
-            "#{latitude}," +
             "#{createTime}," +
             "#{updateTime}" +
             ")")
@@ -68,7 +59,8 @@ public interface OnvifChanelMapper {
             "SET update_time=#{updateTime}" +
             "<if test=\"name != null\">, name=#{name}</if>" +
             "<if test=\"status != null\">, status=#{status}</if>" +
-            "<if test=\"gbId != null\">, gb_id=#{gbId}</if>" +
+            "<if test=\"enableAudio != null\">, enable_audio=#{enableAudio}</if>" +
+            "<if test=\"enableMp4 != null\">, enable_mp4=#{enableMp4}</if>" +
             "<if test=\"username != null\">, username=#{username}</if>" +
             "<if test=\"password != null\">, password=#{password}</if>" +
             "<if test=\"manufacturer != null\">, manufacturer=#{manufacturer}</if>" +
@@ -81,8 +73,6 @@ public interface OnvifChanelMapper {
             "<if test=\"liveStreamUdp != null\">, live_stream_udp=#{liveStreamUdp}</if>" +
             "<if test=\"liveStreamMulticast != null\">, live_stream_multicast=#{liveStreamMulticast}</if>" +
             "<if test=\"replayStream != null\">, replay_stream=#{replayStream}</if>" +
-            "<if test=\"longitude != null\">, longitude=#{longitude}</if>" +
-            "<if test=\"latitude != null\">, latitude=#{latitude}</if>" +
             "WHERE ip=#{ip} and port=#{port}"+
             " </script>"})
     void updateByIpAndPort(OnvifDeviceChannel onvifDeviceChannel);
@@ -97,7 +87,6 @@ public interface OnvifChanelMapper {
             "SET update_time=#{updateTime}" +
             "<if test=\"name != null\">, name=#{name}</if>" +
             "<if test=\"status != null\">, status=#{status}</if>" +
-            "<if test=\"gbId != null\">, gb_id=#{gbId}</if>" +
             "<if test=\"username != null\">, username=#{username}</if>" +
             "<if test=\"password != null\">, password=#{password}</if>" +
             "<if test=\"manufacturer != null\">, manufacturer=#{manufacturer}</if>" +
@@ -112,8 +101,6 @@ public interface OnvifChanelMapper {
             "<if test=\"liveStreamUdp != null\">, live_stream_udp=#{liveStreamUdp}</if>" +
             "<if test=\"liveStreamMulticast != null\">, live_stream_multicast=#{liveStreamMulticast}</if>" +
             "<if test=\"replayStream != null\">, replay_stream=#{replayStream}</if>" +
-            "<if test=\"longitude != null\">, longitude=#{longitude}</if>" +
-            "<if test=\"latitude != null\">, latitude=#{latitude}</if>" +
             "WHERE id=#{id} "+
             " </script>"})
     void update(OnvifDeviceChannel onvifDeviceChannel);
@@ -121,4 +108,6 @@ public interface OnvifChanelMapper {
     @Select("select * from wvp_onvif_device_channel where ip = #{ip} and port = #{port}")
     OnvifDeviceChannel getOneByIpAndPort(String ip, int port);
 
+    @Delete("DELETE from wvp_onvif_device_channel WHERE id=#{id}")
+    void delete(int id);
 }

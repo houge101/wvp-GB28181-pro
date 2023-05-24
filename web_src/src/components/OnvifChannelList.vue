@@ -35,13 +35,19 @@
 <!--        </el-table-column>-->
         <el-table-column prop="manufacturer" label="厂家" min-width="120">
         </el-table-column>
+        <el-table-column prop="model" label="型号" min-width="200">
+        </el-table-column>
         <el-table-column prop="gbId" label="国标ID" min-width="120">
         </el-table-column>
-        <el-table-column label="地址信息"  min-width="200">
-          <template slot-scope="scope">
-            <span>{{ scope.row.ip }}:{{ scope.row.port }}</span>
-          </template>
+        <el-table-column prop="ip" label="IP地址" min-width="120">
         </el-table-column>
+        <el-table-column prop="port" label="端口号" min-width="120">
+        </el-table-column>
+<!--        <el-table-column label="IP地址"  min-width="200">-->
+<!--          <template slot-scope="scope">-->
+<!--            <span>{{ scope.row.ip }}:{{ scope.row.port }}</span>-->
+<!--          </template>-->
+<!--        </el-table-column>-->
         <el-table-column label="位置信息"  min-width="200">
           <template slot-scope="scope">
             <span v-if="scope.row.longitude*scope.row.latitude > 0">{{ scope.row.longitude }},<br>{{ scope.row.latitude }}</span>
@@ -71,6 +77,7 @@
                        @click="stop(scope.row)">停止
             </el-button>
             <el-button size="medium" type="text" icon="el-icon-edit" @click="edit(scope.row)">编辑</el-button>
+            <el-button size="medium" type="text" icon="el-icon-delete" style="color: #f56c6c" @click="deleteChannel(scope.row)">删除</el-button>
             <el-button size="medium" type="text" icon="el-icon-more" @click="details(scope.row)">详情</el-button>
           </template>
         </el-table-column>
@@ -205,17 +212,66 @@ export default {
     },
 
     //通知设备上传媒体流
-    play: function (itemData) {
+    play: function (row) {
+      let that = this;
+      this.$axios({
+        method: 'get',
+        url: `/api/onvif/channel/play`,
+        params: {
+          id: row.id,
+        }
+      }).then(function (res) {
+        if (res.data.code === 0) {
+          that.$refs.devicePlayer.openDialog("streamPlay", null, null, {
+            streamInfo: res.data.data,
+            hasAudio: row.enableAudio
+          });
+        }
 
+      }).catch(function (error) {
+        console.log(error);
+      });
     },
 
     //通知设备上传媒体流
     edit: function (row) {
 
       this.$refs.onvifChannelEdit.openDialog(row, ()=>{
+        console.log(11111);
         this.$refs.onvifChannelEdit.close();
         this.initData();
       })
+    },
+
+    //通知设备上传媒体流
+    deleteChannel: function (row) {
+
+      this.$confirm("确认删除", '提示', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        center: true,
+        type: 'warning'
+      }).then(() => {
+        if (typeof (this.onvifDeviceId) == "undefined") return;
+        this.$axios({
+          method: 'delete',
+          url: `/api/onvif/channel/delete`,
+          params: {
+            id: row.id,
+          }
+        }).then( (res)=> {
+          if (res.data.code !== 0) {
+            this.$message.error(res.data.msg);
+          }else {
+            this.initData()
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      }).catch((error) => {
+        console.log(error);
+      });
     },
 
     //通知设备上传媒体流

@@ -99,4 +99,10 @@
 		<appender-ref ref="SipRollingFile" />
 	</logger>
 
+	<logger name="com.genersoft.iot.vmp.gb28181.conf.StackLoggerImpl" level="info" additivity="true">
+		<appender-ref ref="SipRollingFile" />
+	</logger>
+
+
+
 </configuration>

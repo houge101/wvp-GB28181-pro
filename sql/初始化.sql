@@ -294,7 +294,8 @@ create table wvp_onvif_device_channel (
                                           device_id integer ,
                                           name character varying(255),
                                           status bool default true,
-                                          gb_id character varying(50),
+                                          enable_audio bool default false,
+                                          enable_mp4 bool default false,
                                           ip character varying(50),
                                           port integer,
                                           username character varying(50),
@@ -309,8 +310,6 @@ create table wvp_onvif_device_channel (
                                           live_stream_udp character varying(255),
                                           live_stream_multicast character varying(255),
                                           replay_stream character varying(255),
-                                          longitude double precision,
-                                          latitude double precision,
                                           create_time character varying(50),
                                           update_time character varying(50),
                                           constraint uk_onvif_device_channel_ip_port unique (ip, port)

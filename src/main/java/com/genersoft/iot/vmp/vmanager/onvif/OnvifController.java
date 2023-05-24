@@ -10,6 +10,7 @@ import com.genersoft.iot.vmp.onvif.bean.OnvifDeviceChannel;
 import com.genersoft.iot.vmp.onvif.service.IOnvifService;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
+import com.genersoft.iot.vmp.vmanager.bean.StreamContent;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -178,19 +179,58 @@ public class OnvifController {
         resultHolder.put(key, uuid, result);
 
         deviceChannel.setUpdateTime(DateUtil.getNow());
+        onvifService.stop(deviceChannel.getId());
         onvifService.updateChannel(deviceChannel);
 
         if (deviceChannel.getUsername() != null && deviceChannel.getPassword() != null) {
-            if (!deviceChannel.getUsername().equals(deviceChannelInDb.getUsername())
-                    || !deviceChannel.getPassword().equals(deviceChannelInDb.getPassword())) {
-                onvifService.queryChannelInfo(deviceChannel.getDeviceId(), deviceChannel.getId(),
-                        deviceChannel.getUsername(), deviceChannel.getPassword());
-            }
+            onvifService.queryChannelInfo(deviceChannel.getDeviceId(), deviceChannel.getId(),
+                    deviceChannel.getUsername(), deviceChannel.getPassword());
         }else {
             // 释放请求
             resultHolder.invokeResult(requestMessage);
         }
 
         return result;
+    }
+
+    /**
+     *  播放
+     *
+     * @param id onvif通道Id
+     */
+    @Operation(summary = "播放")
+    @Parameter(name = "deviceId",description = "onvif通道Id",required = true)
+    @GetMapping("/channel/play")
+    public StreamContent play( int id ) {
+        StreamInfo streamInfo = onvifService.play(id);
+        if (streamInfo == null) {
+            throw new ControllerException(ErrorCode.ERROR100);
+        }
+        return new StreamContent(streamInfo);
+    }
+
+    /**
+     *  停止
+     *
+     * @param id onvif通道Id
+     */
+    @Operation(summary = "停止")
+    @Parameter(name = "id",description = "onvif通道Id",required = true)
+    @GetMapping("/channel/stop")
+    public void stop( int id ) {
+        onvifService.stop(id);
+    }
+
+    /**
+     *  删除
+     *
+     * @param id onvif通道Id
+     */
+    @Operation(summary = "删除")
+    @Parameter(name = "id",description = "onvif通道Id",required = true)
+    @DeleteMapping("/channel/delete")
+    public void delete( int id ) {
+        onvifService.stop(id);
+        onvifService.deleteChannel(id);
     }
 }

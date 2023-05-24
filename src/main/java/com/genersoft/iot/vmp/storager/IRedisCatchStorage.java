@@ -106,7 +106,7 @@ public interface IRedisCatchStorage {
      */
     void removeStream(String mediaServerId, String type);
 
-    List<OnStreamChangedHookParam> getStreams(String mediaServerId, String pull);
+    List<OnStreamChangedHookParam> getStreams(String mediaServerId, String type);
 
     /**
      * 将device信息写入redis

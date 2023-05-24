@@ -13,7 +13,7 @@ import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.session.SSRCFactory;
 import com.genersoft.iot.vmp.media.zlm.AssistRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
-import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZLMServerFactory;
 import com.genersoft.iot.vmp.media.zlm.ZLMServerConfig;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.media.zlm.dto.ServerKeepaliveData;
@@ -86,7 +86,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
 
 
     @Autowired
-    private ZLMRTPServerFactory zlmrtpServerFactory;
+    private ZLMServerFactory ZLMServerFactory;
 
     @Autowired
     private EventPublisher publisher;
@@ -150,7 +150,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
         }
         int rtpServerPort;
         if (mediaServerItem.isRtpEnable()) {
-            rtpServerPort = zlmrtpServerFactory.createRTPServer(mediaServerItem, streamId, ssrcCheck?Integer.parseInt(ssrc):0, port, reUsePort, tcpMode);
+            rtpServerPort = ZLMServerFactory.createRTPServer(mediaServerItem, streamId, ssrcCheck?Integer.parseInt(ssrc):0, port, reUsePort, tcpMode);
         } else {
             rtpServerPort = mediaServerItem.getRtpProxyPort();
         }
@@ -162,7 +162,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
         if (mediaServerItem == null) {
             return;
         }
-        zlmrtpServerFactory.closeRtpServer(mediaServerItem, streamId);
+        ZLMServerFactory.closeRtpServer(mediaServerItem, streamId);
     }
 
     @Override
@@ -171,7 +171,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
             callback.run(false);
             return;
         }
-        zlmrtpServerFactory.closeRtpServer(mediaServerItem, streamId, callback);
+        ZLMServerFactory.closeRtpServer(mediaServerItem, streamId, callback);
     }
 
     @Override
@@ -182,7 +182,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
 
     @Override
     public Boolean updateRtpServerSSRC(MediaServerItem mediaServerItem, String streamId, String ssrc) {
-        return zlmrtpServerFactory.updateRtpServerSSRC(mediaServerItem, streamId, ssrc);
+        return ZLMServerFactory.updateRtpServerSSRC(mediaServerItem, streamId, ssrc);
     }
 
     @Override

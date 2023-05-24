@@ -452,6 +452,9 @@ public class RedisCatchStorageImpl implements IRedisCatchStorage {
 
     @Override
     public OnStreamChangedHookParam getStreamInfo(String app, String streamId, String mediaServerId) {
+        if (mediaServerId == null) {
+            mediaServerId = "*";
+        }
         String scanKey = VideoManagerConstants.WVP_SERVER_STREAM_PREFIX  + userSetting.getServerId() + "_*_" + app + "_" + streamId + "_" + mediaServerId;
 
         OnStreamChangedHookParam result = null;

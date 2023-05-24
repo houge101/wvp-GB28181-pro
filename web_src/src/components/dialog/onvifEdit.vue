@@ -51,7 +51,7 @@ export default {
     return {
       listChangeCallback: null,
       showDialog: false,
-      isLoging: false,
+      isLoging: true,
       hostNames:[],
       form: {
         hostName: null,
@@ -77,6 +77,7 @@ export default {
 
     },
     onSubmit: function () {
+      this.isLoging = true;
       console.log("onSubmit");
       console.log(this.form);
       this.$axios({

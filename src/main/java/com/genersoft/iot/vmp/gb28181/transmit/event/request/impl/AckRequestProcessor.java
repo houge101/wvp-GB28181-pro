@@ -10,7 +10,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommanderForPlatform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
-import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZLMServerFactory;
 import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.service.IMediaServerService;
@@ -61,7 +61,7 @@ public class AckRequestProcessor extends SIPRequestProcessorParent implements In
 	private IVideoManagerStorage storager;
 
 	@Autowired
-	private ZLMRTPServerFactory zlmrtpServerFactory;
+	private ZLMServerFactory ZLMServerFactory;
 
 	@Autowired
 	private ZlmHttpHookSubscribe hookSubscribe;
@@ -137,11 +137,11 @@ public class AckRequestProcessor extends SIPRequestProcessorParent implements In
 			// 如果是非严格模式，需要关闭端口占用
 			JSONObject startSendRtpStreamResult = null;
 			if (sendRtpItem.getLocalPort() != 0) {
-				if (zlmrtpServerFactory.releasePort(mediaInfo, sendRtpItem.getSsrc())) {
-					startSendRtpStreamResult = zlmrtpServerFactory.startSendRtpStream(mediaInfo, param);
+				if (ZLMServerFactory.releasePort(mediaInfo, sendRtpItem.getSsrc())) {
+					startSendRtpStreamResult = ZLMServerFactory.startSendRtpStream(mediaInfo, param);
 				}
 			}else {
-				startSendRtpStreamResult = zlmrtpServerFactory.startSendRtpStream(mediaInfo, param);
+				startSendRtpStreamResult = ZLMServerFactory.startSendRtpStream(mediaInfo, param);
 			}
 			if (startSendRtpStreamResult != null) {
 				startSendRtpStreamHand(evt, sendRtpItem, parentPlatform, startSendRtpStreamResult, param, callIdHeader);

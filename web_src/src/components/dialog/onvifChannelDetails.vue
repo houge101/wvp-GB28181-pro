@@ -2,14 +2,14 @@
   <div id="onvifChannelDetails">
     <el-dialog
       title="Onvif通道详情"
-      width="=80%"
+      width="=70%"
       top="2rem"
       :close-on-click-modal="false"
       :visible.sync="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
+      <div id="shared" style="margin: 1rem 4rem">
         <el-descriptions :column="2" :span="2">
           <el-descriptions-item label="名称" >{{channelData.name}}</el-descriptions-item>
           <el-descriptions-item label="IP">{{channelData.ip}}</el-descriptions-item>

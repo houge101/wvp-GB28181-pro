@@ -1,9 +1,11 @@
 package com.genersoft.iot.vmp.onvif.bean;
 
+import com.genersoft.iot.vmp.gb28181.bean.GbStream;
+
 /**
  * onvif检索出来的通道信息
  */
-public class OnvifDeviceChannel {
+public class OnvifDeviceChannel extends GbStream {
 
     /**
      * ID
@@ -24,11 +26,6 @@ public class OnvifDeviceChannel {
      * 状态， 一般参考onvif设备的状态
      */
     private boolean status;
-
-    /**
-     * 国标ID， 后续可以扩展后通过国标级联发送给其他平台
-     */
-    private String gbId;
 
     /**
      * 设备相机IP
@@ -106,14 +103,15 @@ public class OnvifDeviceChannel {
     private String recordings;
 
     /**
-     * 经度
+     * 是否开启音频
      */
-    private double longitude;
+    private boolean enableAudio;
 
     /**
-     * 纬度
+     * 是否录制
      */
-    private double latitude;
+    private boolean enableMp4;
+
 
     private String createTime;
 
@@ -149,14 +147,6 @@ public class OnvifDeviceChannel {
 
     public void setStatus(boolean status) {
         this.status = status;
-    }
-
-    public String getGbId() {
-        return gbId;
-    }
-
-    public void setGbId(String gbId) {
-        this.gbId = gbId;
     }
 
     public String getIp() {
@@ -279,22 +269,6 @@ public class OnvifDeviceChannel {
         this.recordings = recordings;
     }
 
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
     public String getCreateTime() {
         return createTime;
     }
@@ -309,5 +283,21 @@ public class OnvifDeviceChannel {
 
     public void setUpdateTime(String updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public boolean isEnableAudio() {
+        return enableAudio;
+    }
+
+    public void setEnableAudio(boolean enableAudio) {
+        this.enableAudio = enableAudio;
+    }
+
+    public boolean isEnableMp4() {
+        return enableMp4;
+    }
+
+    public void setEnableMp4(boolean enableMp4) {
+        this.enableMp4 = enableMp4;
     }
 }

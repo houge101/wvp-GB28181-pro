@@ -9,8 +9,8 @@
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
-        <el-form ref="form" :rules="rules" :model="form" label-width="200px" >
+      <div id="shared" style="margin-top: 1rem; padding: 0 4rem" v-loading="submitLoading" element-loading-text="正在获取结果">
+        <el-form ref="form" :rules="rules" :model="form" label-width="100px" >
           <el-form-item label="名称" prop="name">
             <el-input v-model="form.name"></el-input>
           </el-form-item>
@@ -28,6 +28,10 @@
           </el-form-item>
           <el-form-item label="纬度" prop="latitude">
             <el-input v-model="form.latitude"></el-input>
+          </el-form-item>
+          <el-form-item label="其他选项">
+            <el-checkbox label="录像" v-model="form.enableMp4" style="float: left"></el-checkbox>
+            <el-checkbox label="开启音频" v-model="form.enableAudio" style="float: left"></el-checkbox>
           </el-form-item>
           <el-form-item>
             <div style="float: right;">
@@ -52,6 +56,7 @@ export default {
     return {
       listChangeCallback: null,
       showDialog: false,
+      submitLoading: false,
       isLoging: false,
       hostNames:[],
       mediaServerList: [], // 滅体节点列表
@@ -70,21 +75,20 @@ export default {
       if (row) {
         this.isEdit = true;
       }
-      this.form = {};
       this.listChangeCallback = callback;
       if (row != null) {
         this.form = row;
       }
     },
     onSubmit: function () {
-      console.log("onSubmit");
-      console.log(this.form);
+      this.submitLoading = true
       this.$axios({
         method: 'post',
         url:`/api/onvif/channel/update/`,
         params: this.form
       }).then((res) => {
         console.log(res.data)
+        this.submitLoading = false
         if (res.data.code === 0) {
           this.listChangeCallback();
           this.close();
@@ -95,13 +99,16 @@ export default {
             type: "error",
           });
         }
-      }).catch(function (error) {
+      }).catch( (error)=> {
         console.log(error);
+        this.submitLoading = false
       });
     },
     close: function () {
       this.showDialog = false;
+      this.submitLoading = false
       this.$refs.form.resetFields();
+      this.form = {};
     },
   },
 };

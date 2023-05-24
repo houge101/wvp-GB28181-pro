@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Component
-public class ZLMRTPServerFactory {
+public class ZLMServerFactory {
 
     private Logger logger = LoggerFactory.getLogger("ZLMRTPServerFactory");
 

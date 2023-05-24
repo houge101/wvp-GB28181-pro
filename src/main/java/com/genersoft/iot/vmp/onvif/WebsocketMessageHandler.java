@@ -10,6 +10,8 @@ import com.genersoft.iot.vmp.onvif.bean.OnvifDeviceChannel;
 import com.genersoft.iot.vmp.onvif.bean.WebsocketMessage;
 import com.genersoft.iot.vmp.onvif.service.IOnvifService;
 import com.genersoft.iot.vmp.utils.DateUtil;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,45 +36,56 @@ public class WebsocketMessageHandler {
         JSONObject data = wsMsg.getData();
         switch (wsMsg.getMessageType()) {
             case INFO:
-                OnvifDevice onvifDevice = JSON.to(OnvifDevice.class, data);
-                String name = data.getString("name");
-                Boolean directConnection = data.getBoolean("directConnection");
-                logger.info("[onvif 消息处理] 收到节点信息： id: {}, 名称：{}， 直连：{} ", deviceId, name, directConnection);
-                onvifDevice.setId(deviceId);
-                onvifDevice.setCreateTime(DateUtil.getNow());
-                onvifDevice.setUpdateTime(DateUtil.getNow());
-                onvifService.updateDevice(onvifDevice);
-                break;
-            case DISCOVERY:
-                OnvifDeviceChannel onvifDeviceChannel = JSON.to(OnvifDeviceChannel.class, data);
-                logger.info("[onvif 消息处理] 发现摄像头：id: {}, IP:{}, 端口：{} ", deviceId, onvifDeviceChannel.getIp(), onvifDeviceChannel.getPort());
-                onvifDeviceChannel.setDeviceId(deviceId);
-                onvifDeviceChannel.setCreateTime(DateUtil.getNow());
-                onvifDeviceChannel.setUpdateTime(DateUtil.getNow());
-                OnvifDeviceChannel channel = onvifService.getChannelByIpAndPort(onvifDeviceChannel.getIp(), onvifDeviceChannel.getPort());
-                if (channel == null) {
-                    onvifService.addChannel(onvifDeviceChannel);
-                }else {
-                    onvifService.updateChannel(onvifDeviceChannel);
+                if (wsMsg.isSuccess()) {
+                    OnvifDevice onvifDevice = JSON.to(OnvifDevice.class, data);
+                    String name = data.getString("name");
+                    Boolean directConnection = data.getBoolean("directConnection");
+                    logger.info("[onvif 消息处理] 收到节点信息： id: {}, 名称：{}， 直连：{} ", deviceId, name, directConnection);
+                    onvifDevice.setId(deviceId);
+                    onvifDevice.setStatus(true);
+                    onvifDevice.setCreateTime(DateUtil.getNow());
+                    onvifDevice.setUpdateTime(DateUtil.getNow());
+                    onvifService.updateDevice(onvifDevice);
                 }
 
                 break;
+            case DISCOVERY:
+                if (wsMsg.isSuccess()) {
+                    OnvifDeviceChannel onvifDeviceChannel = JSON.to(OnvifDeviceChannel.class, data);
+                    logger.info("[onvif 消息处理] 发现摄像头：id: {}, IP:{}, 端口：{} ", deviceId, onvifDeviceChannel.getIp(), onvifDeviceChannel.getPort());
+                    onvifDeviceChannel.setDeviceId(deviceId);
+                    onvifDeviceChannel.setCreateTime(DateUtil.getNow());
+                    onvifDeviceChannel.setUpdateTime(DateUtil.getNow());
+                    OnvifDeviceChannel channel = onvifService.getChannelByIpAndPort(onvifDeviceChannel.getIp(), onvifDeviceChannel.getPort());
+                    if (channel == null) {
+                        onvifService.addChannel(onvifDeviceChannel);
+                    }else {
+                        onvifService.updateChannel(onvifDeviceChannel);
+                    }
+                }
+                break;
             case CAMERA_INFO:
-                logger.info("[onvif 消息处理] 摄像头详情：id: {}, 详情：{} ", deviceId, data);
+                logger.info("[onvif 消息处理] 摄像头详情：设备：{}, 通道: {}, 详情：{} ", deviceId, wsMsg.getChannelId(), data);
+
+                RequestMessage requestMessage = new RequestMessage();
+                String key = ConstantHolder.QUERY_CHANNEL_INFO + deviceId + wsMsg.getChannelId();
+                requestMessage.setKey(key);
+
+                if (!wsMsg.isSuccess()) {
+                    requestMessage.setData(WVPResult.fail(ErrorCode.ERROR100.getCode(), wsMsg.getMsg()));
+                    resultHolder.invokeAllResult(requestMessage);
+                    break;
+                }
                 OnvifDeviceChannel onvifChannel = JSON.to(OnvifDeviceChannel.class, data);
                 if (onvifChannel.getIp() == null || onvifChannel.getPort() == 0) {
                     logger.warn("[onvif 消息处理] 内容中缺少IP以及端口");
                     break;
                 }
+
                 onvifChannel.setDeviceId(deviceId);
                 onvifChannel.setUpdateTime(DateUtil.getNow());
                 onvifService.updateChannel(onvifChannel);
 
-                OnvifDeviceChannel onvifChannelInDb = onvifService.getChannelByIpAndPort(onvifChannel.getIp(), onvifChannel.getPort());
-
-                RequestMessage requestMessage = new RequestMessage();
-                String key = ConstantHolder.QUERY_CHANNEL_INFO + deviceId + onvifChannelInDb.getId();
-                requestMessage.setKey(key);
                 resultHolder.invokeAllResult(requestMessage);
                 break;
             default:

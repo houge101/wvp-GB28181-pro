@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.onvif.service;
 
+import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.onvif.bean.OnvifDevice;
 import com.genersoft.iot.vmp.onvif.bean.OnvifDeviceChannel;
 import com.github.pagehelper.PageInfo;
@@ -28,4 +29,10 @@ public interface IOnvifService {
     OnvifDevice getDevice(int id);
 
     OnvifDeviceChannel getChannel(int id);
+
+    StreamInfo play(int channelId);
+
+    void stop(int channelId);
+
+    void deleteChannel(int channelId);
 }

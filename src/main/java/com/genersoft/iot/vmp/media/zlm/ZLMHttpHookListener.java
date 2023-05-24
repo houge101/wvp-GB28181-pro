@@ -353,6 +353,9 @@ public class ZLMHttpHookListener {
                 } else {
                     if (!"rtp".equals(param.getApp())) {
                         String type = OriginType.values()[param.getOriginType()].getType();
+                        if (param.getApp().equals("onvif")) {
+                            type = "onvif";
+                        }
                         if (param.isRegist()) {
                             StreamAuthorityInfo streamAuthorityInfo = redisCatchStorage.getStreamAuthorityInfo(
                                     param.getApp(), param.getStream());
@@ -372,16 +375,15 @@ public class ZLMHttpHookListener {
                             }
                         } else {
                             // 兼容流注销时类型从redis记录获取
-                            OnStreamChangedHookParam onStreamChangedHookParam = redisCatchStorage.getStreamInfo(
-                                    param.getApp(), param.getStream(), param.getMediaServerId());
-                            if (onStreamChangedHookParam != null) {
-                                type = OriginType.values()[onStreamChangedHookParam.getOriginType()].getType();
-                                redisCatchStorage.removeStream(mediaInfo.getId(), type, param.getApp(), param.getStream());
+                            if (!type.equals("onvif")) {
+                                OnStreamChangedHookParam onStreamChangedHookParam = redisCatchStorage.getStreamInfo(
+                                        param.getApp(), param.getStream(), param.getMediaServerId());
+                                if (onStreamChangedHookParam != null) {
+                                    type = OriginType.values()[onStreamChangedHookParam.getOriginType()].getType();
+                                }
                             }
+                            redisCatchStorage.removeStream(mediaInfo.getId(), type, param.getApp(), param.getStream());
                             GbStream gbStream = storager.getGbStream(param.getApp(), param.getStream());
-                            if (gbStream != null) {
-//									eventPublisher.catalogEventPublishForStream(null, gbStream, CatalogEvent.OFF);
-                            }
                             zlmMediaListManager.removeMedia(param.getApp(), param.getStream());
                         }
                         GbStream gbStream = storager.getGbStream(param.getApp(), param.getStream());
@@ -492,6 +494,10 @@ public class ZLMHttpHookListener {
                 return ret;
             }
         } else {
+            if (param.getApp().equals("onvif")) {
+                ret.put("close", true);
+                return ret;
+            }
             // 非国标流 推流/拉流代理
             // 拉流代理
             StreamProxyItem streamProxyItem = streamProxyService.getStreamProxyByAppAndStream(param.getApp(), param.getStream());
@@ -673,6 +679,7 @@ public class ZLMHttpHookListener {
 
         return HookResult.SUCCESS();
     }
+
 
     private Map<String, String> urlParamToMap(String params) {
         HashMap<String, String> map = new HashMap<>();
