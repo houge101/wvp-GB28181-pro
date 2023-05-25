@@ -81,14 +81,20 @@ public class OnvifController {
      *  扫描ONVIF通道
      *
      * @param deviceId onvif设备Id
+     * @param clear 是否清空现有通道
      */
     @Operation(summary = "扫描ONVIF通道")
     @Parameter(name = "deviceId",description = "onvif设备Id",required = true)
+    @Parameter(name = "clear",description = "是否清空现有通道",required = false)
     @GetMapping("/device/discovery")
     public void discovery(
-            @RequestParam int deviceId
+            @RequestParam Integer deviceId,
+            @RequestParam(required = false) Boolean clear
     ) {
-        onvifService.discovery(deviceId);
+        if (clear == null) {
+            clear = false;
+        }
+        onvifService.discovery(deviceId, clear);
     }
 
     /**
@@ -201,12 +207,32 @@ public class OnvifController {
     @Operation(summary = "播放")
     @Parameter(name = "deviceId",description = "onvif通道Id",required = true)
     @GetMapping("/channel/play")
-    public StreamContent play( int id ) {
-        StreamInfo streamInfo = onvifService.play(id);
-        if (streamInfo == null) {
-            throw new ControllerException(ErrorCode.ERROR100);
-        }
-        return new StreamContent(streamInfo);
+    public DeferredResult<StreamContent> play( int id ) {
+
+
+        RequestMessage requestMessage = new RequestMessage();
+        String key = ConstantHolder.PLAY_ONVIF_CHANNEL + id;
+        requestMessage.setKey(key);
+        String uuid = UUID.randomUUID().toString();
+        requestMessage.setId(uuid);
+        DeferredResult<StreamContent> result = new DeferredResult<>();
+
+        result.onTimeout(()->{
+            logger.info("[Onvif HTTP请求] 播放超时, 通道ID： {}", id);
+            // 释放rtpServer
+            WVPResult<StreamContent> wvpResult = new WVPResult<>();
+            wvpResult.setCode(ErrorCode.ERROR100.getCode());
+            wvpResult.setMsg("获取通道详情超时");
+            requestMessage.setData(wvpResult);
+            resultHolder.invokeResult(requestMessage);
+        });
+
+        // 录像查询以channelId作为deviceId查询
+        resultHolder.put(key, uuid, result);
+
+        onvifService.play(id);
+
+        return result;
     }
 
     /**

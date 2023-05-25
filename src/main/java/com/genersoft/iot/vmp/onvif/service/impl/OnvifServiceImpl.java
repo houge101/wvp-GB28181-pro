@@ -3,16 +3,19 @@ package com.genersoft.iot.vmp.onvif.service.impl;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
+import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
+import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
+import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.ZLMServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
+import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeFactory;
+import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeForStreamChange;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.media.zlm.dto.hook.OnStreamChangedHookParam;
 import com.genersoft.iot.vmp.onvif.WebsocketSessionManger;
-import com.genersoft.iot.vmp.onvif.bean.OnvifDevice;
-import com.genersoft.iot.vmp.onvif.bean.OnvifDeviceChannel;
-import com.genersoft.iot.vmp.onvif.bean.WebsocketMessage;
-import com.genersoft.iot.vmp.onvif.bean.WebsocketMessageType;
+import com.genersoft.iot.vmp.onvif.bean.*;
 import com.genersoft.iot.vmp.onvif.dao.OnvifChanelMapper;
 import com.genersoft.iot.vmp.onvif.dao.OnvifDeviceMapper;
 import com.genersoft.iot.vmp.onvif.service.IOnvifService;
@@ -21,13 +24,14 @@ import com.genersoft.iot.vmp.service.IMediaService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
+import com.genersoft.iot.vmp.vmanager.bean.StreamContent;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.websocket.RemoteEndpoint;
@@ -60,13 +64,20 @@ public class OnvifServiceImpl implements IOnvifService {
     private IMediaService mediaService;
 
     @Autowired
-    private RedisTemplate<Object, Object> redisTemplate;
+    private DeferredResultHolder resultHolder;
 
     @Autowired
     private IRedisCatchStorage redisCatchStorage;
 
     @Autowired
     private ZLMRESTfulUtils zlmresTfulUtils;
+
+    @Autowired
+    private ZlmHttpHookSubscribe subscribe;
+
+    @Autowired
+    private DynamicTask dynamicTask;
+
 
     @Override
     public void addDevice(OnvifDevice onvifDevice) {
@@ -116,8 +127,11 @@ public class OnvifServiceImpl implements IOnvifService {
     }
 
     @Override
-    public void discovery(int deviceId) {
-        logger.info("[onvif 请求扫描设备] id: {}", deviceId);
+    public void discovery(int deviceId, boolean clear) {
+        logger.info("[onvif 请求扫描设备] id: {}, 是否清空：{}", deviceId, clear);
+        if (clear) {
+            onvifChanelMapper.clearByDeviceId(deviceId);
+        }
         RemoteEndpoint.Async asyncRemote = getRemoteEndpoint(deviceId);
 
         WebsocketMessage message = new WebsocketMessage();
@@ -244,12 +258,17 @@ public class OnvifServiceImpl implements IOnvifService {
     }
 
     @Override
-    public StreamInfo play( int channelId) {
+    public void play( int channelId) {
         logger.info("[播放ONVIF] 通道ID：{}", channelId);
         OnvifDeviceChannel channel = onvifChanelMapper.getOne(channelId);
         if (channel == null) {
             throw new ControllerException(ErrorCode.ERROR400);
         }
+
+        RequestMessage requestMessage = new RequestMessage();
+        String key = ConstantHolder.PLAY_ONVIF_CHANNEL + channelId;
+        requestMessage.setKey(key);
+
         String type = "onvif";
         String app = "onvif";
         String stream = channel.getId() + "";
@@ -265,7 +284,11 @@ public class OnvifServiceImpl implements IOnvifService {
                     redisCatchStorage.removeStream(mediaServerId, type, app, stream);
                 }else {
                     logger.info("[播放ONVIF] 已拉起，直接返回，通道ID：{}", channelId);
-                    return mediaService.getStreamInfoByAppAndStream(mediaServerItem, app, stream, null, null);
+                    StreamInfo resultStreamInfo = mediaService.getStreamInfoByAppAndStream(mediaServerItem, app, stream, null, null);
+
+                    requestMessage.setData(new StreamContent(resultStreamInfo));
+                    resultHolder.invokeAllResult(requestMessage);
+                    return;
                 }
             }
         }
@@ -274,13 +297,16 @@ public class OnvifServiceImpl implements IOnvifService {
             logger.info("[播放ONVIF] 失败，没有可用的ZLM，通道ID：{}", channelId);
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "没有可用的ZLM");
         }
+        // tcp拉流
         String rtpType = "0";
         String uriStr = channel.getLiveStreamTcp();
         if (uriStr == null) {
             if (channel.getLiveStreamUdp() != null) {
+                // udp拉流
                 rtpType = "1";
                 uriStr = channel.getLiveStreamUdp();
             }else if (channel.getLiveStreamMulticast() != null) {
+                // 组播拉流
                 rtpType = "2";
                 uriStr = channel.getLiveStreamMulticast();
             }else {
@@ -294,14 +320,31 @@ public class OnvifServiceImpl implements IOnvifService {
         }
         JSONObject jsonObject = zlmresTfulUtils.addStreamProxy(mediaServerItem, app, stream, rtspUri,
                 channel.isEnableAudio(), channel.isEnableMp4(), rtpType);
+        System.out.println(jsonObject);
         if (jsonObject == null) {
             logger.info("[播放ONVIF] 失败，结果为空，通道ID：{}", channelId);
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "拉流失败，结果为空");
         }
-        if (jsonObject.getInteger("code") == 0) {
+        HookSubscribeForStreamChange hookSubscribe = HookSubscribeFactory.on_stream_changed(app, stream, true, "rtsp", mediaServerItem.getId());
+        // 添加订阅
+        subscribe.addSubscribe(hookSubscribe, (MediaServerItem mediaServerItemInUse, JSONObject json) -> {
             logger.info("[播放ONVIF] 成功，通道ID：{}", channelId);
-            return mediaService.getStreamInfoByAppAndStream(mediaServerItem, app, stream, null, null);
-        }else {
+            subscribe.removeSubscribe(hookSubscribe);
+            StreamInfo resultStreamInfo = mediaService.getStreamInfoByAppAndStream(mediaServerItem, app, stream, null, null);
+            requestMessage.setData(new StreamContent(resultStreamInfo));
+            resultHolder.invokeAllResult(requestMessage);
+        });
+
+        dynamicTask.startDelay(key, ()->{
+            logger.info("[播放ONVIF] 超时，通道ID：{}", channelId);
+            subscribe.removeSubscribe(hookSubscribe);
+            stop(channelId);
+            requestMessage.setData(WVPResult.fail(ErrorCode.ERROR100.getCode(), "播放超时"));
+            resultHolder.invokeAllResult(requestMessage);
+        }, 10000);
+
+        if (jsonObject.getInteger("code") != 0) {
+            subscribe.removeSubscribe(hookSubscribe);
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "拉流失败，错误码：" + jsonObject.getInteger("code"));
         }
     }

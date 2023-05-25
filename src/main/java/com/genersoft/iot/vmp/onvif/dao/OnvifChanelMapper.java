@@ -110,4 +110,7 @@ public interface OnvifChanelMapper {
 
     @Delete("DELETE from wvp_onvif_device_channel WHERE id=#{id}")
     void delete(int id);
+
+    @Delete("DELETE from wvp_onvif_device_channel WHERE device_id=#{deviceId}")
+    void clearByDeviceId(int deviceId);
 }

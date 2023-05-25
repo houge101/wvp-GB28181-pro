@@ -1,5 +1,5 @@
 <template>
-  <div id="channelList" style="width: 100%">
+  <div id="channelList" style="width: 100%" v-loading="channelLoading" element-loading-text="正在请求视频">
     <div class="page-header">
       <div class="page-title">
         <el-button icon="el-icon-back" size="mini" style="font-size: 20px; color: #000;" type="text" @click="showDevice" ></el-button>
@@ -116,6 +116,7 @@ export default {
   },
   data() {
     return {
+      channelLoading: false,
       onvifDeviceId: this.$route.params.onvifDeviceId,
       onvifDeviceChannelList: [],
       updateLooper: 0, //数据刷新轮训标志
@@ -144,33 +145,57 @@ export default {
   methods: {
     discovery: function (){
       let that = this;
-      this.$confirm("扫描设备将清除现有通道", '提示', {
+      this.$confirm("是否清空现有通道", '提示', {
         dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: '是',
+        cancelButtonText: '否',
         center: true,
         type: 'warning'
       }).then(() => {
+        if (typeof (this.onvifDeviceId) == "undefined") return;
+        this.onvifDeviceChannelList = [];
+        this.$axios({
+          method: 'get',
+          url: `/api/onvif/device/discovery`,
+          params: {
+            deviceId: that.onvifDeviceId,
+            clear: true
+          }
+        }).then(function (res) {
+          if (res.data.code !== 0) {
+            that.$message.error(res.data.msg);
+          }
+          this.initData();
+        }).catch(function (error) {
+          console.log(error);
+        });
+      }).catch(() => {
         if (typeof (this.onvifDeviceId) == "undefined") return;
         this.$axios({
           method: 'get',
           url: `/api/onvif/device/discovery`,
           params: {
             deviceId: that.onvifDeviceId,
+            clear: false
           }
         }).then(function (res) {
           if (res.data.code !== 0) {
             that.$message.error(res.data.msg);
           }
+          this.initData();
         }).catch(function (error) {
           console.log(error);
         });
-      }).catch(() => {
-        console.log(error);
       });
     },
     initData: function () {
       this.getOnvifDeviceChannelList();
+      if (!this.updateLooper) {
+        this.updateLooper = setTimeout(()=>{
+          this.updateLooper = 0;
+          this.initData();
+        }, 1000)
+      }
     },
     initParam: function () {
       this.deviceId = this.$route.params.onvifDeviceId;
@@ -214,13 +239,15 @@ export default {
     //通知设备上传媒体流
     play: function (row) {
       let that = this;
+      this.channelLoading = true
       this.$axios({
         method: 'get',
         url: `/api/onvif/channel/play`,
         params: {
           id: row.id,
         }
-      }).then(function (res) {
+      }).then((res)=> {
+        this.channelLoading = false
         if (res.data.code === 0) {
           that.$refs.devicePlayer.openDialog("streamPlay", null, null, {
             streamInfo: res.data.data,
@@ -228,8 +255,9 @@ export default {
           });
         }
 
-      }).catch(function (error) {
+      }).catch((error)=> {
         console.log(error);
+        this.channelLoading = false
       });
     },
 
