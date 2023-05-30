@@ -44,6 +44,10 @@ spring:
             max-lifetime: 1200000                 # 是池中连接关闭后的最长生命周期（以毫秒为单位)
 
 
+# 修改分页插件为 postgresql， 数据库类型为mysql不需要
+#pagehelper:
+#    helper-dialect: postgresql
+
 # [可选] WVP监听的HTTP端口, 网页和接口调用都是这个端口
 server:
     port: 18080
@@ -186,6 +190,8 @@ user-settings:
     sip-use-source-ip-as-remote-address: false
     # 是否开启sip日志
     sip-log: true
+    # 是否开启sql日志
+    sql-log: true
     # 消息通道功能-缺少国标ID是否给所有上级发送消息
     send-to-platforms-when-id-lost: true
     # 保持通道状态，不接受notify通道状态变化， 兼容海康平台发送错误消息
