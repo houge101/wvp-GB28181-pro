@@ -6,7 +6,11 @@ import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.common.CommonCallback;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.bean.SendRtpItem;
-import com.genersoft.iot.vmp.media.zlm.dto.*;
+import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeFactory;
+import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeForRtpServerTimeout;
+import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
+import com.genersoft.iot.vmp.media.zlm.dto.hook.HookParam;
+import com.genersoft.iot.vmp.media.zlm.dto.hook.OnRtpServerTimeoutHookParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -223,7 +227,7 @@ public class ZLMServerFactory {
         int localPort = 0;
         if (userSetting.getGbSendStreamStrict()) {
             if (userSetting.getGbSendStreamStrict()) {
-                localPort = keepPort(serverItem, ssrc);
+                localPort = keepPort(serverItem, ssrc, localPort);
                 if (localPort == 0) {
                     return null;
                 }
@@ -259,7 +263,7 @@ public class ZLMServerFactory {
         // 默认为随机端口
         int localPort = 0;
         if (userSetting.getGbSendStreamStrict()) {
-            localPort = keepPort(serverItem, ssrc);
+            localPort = keepPort(serverItem, ssrc, localPort);
             if (localPort == 0) {
                 return null;
             }
@@ -283,30 +287,35 @@ public class ZLMServerFactory {
     /**
      * 保持端口，直到需要需要发流时再释放
      */
-    public int keepPort(MediaServerItem serverItem, String ssrc) {
-        int localPort = 0;
+    public int keepPort(MediaServerItem serverItem, String ssrc, Integer localPort) {
         Map<String, Object> param = new HashMap<>(3);
-        param.put("port", 0);
+        param.put("port", localPort);
         param.put("enable_tcp", 1);
         param.put("stream_id", ssrc);
         JSONObject jsonObject = zlmresTfulUtils.openRtpServer(serverItem, param);
         if (jsonObject.getInteger("code") == 0) {
             localPort = jsonObject.getInteger("port");
             HookSubscribeForRtpServerTimeout hookSubscribeForRtpServerTimeout = HookSubscribeFactory.on_rtp_server_timeout(ssrc, null, serverItem.getId());
+            Integer finalLocalPort = localPort;
             hookSubscribe.addSubscribe(hookSubscribeForRtpServerTimeout,
-                    (MediaServerItem mediaServerItem, JSONObject response)->{
-                        logger.info("[上级点播] {}->监听端口到期继续保持监听", ssrc);
-                        int port = keepPort(serverItem, ssrc);
+                    (MediaServerItem mediaServerItem, HookParam hookParam)->{
+                        logger.info("[上级点播] {}->监听端口到期继续保持监听: {}", ssrc, finalLocalPort);
+                        OnRtpServerTimeoutHookParam rtpServerTimeoutHookParam = (OnRtpServerTimeoutHookParam) hookParam;
+                        if (!ssrc.equals(rtpServerTimeoutHookParam.getSsrc())) {
+                            return;
+                        }
+                        int port = keepPort(serverItem, ssrc, finalLocalPort);
                         if (port == 0) {
                             logger.info("[上级点播] {}->监听端口失败，移除监听", ssrc);
                             hookSubscribe.removeSubscribe(hookSubscribeForRtpServerTimeout);
                         }
                     });
             logger.info("[上级点播] {}->监听端口: {}", ssrc, localPort);
+            return localPort;
         }else {
-            logger.info("[上级点播] 监听端口失败: {}", ssrc);
+            logger.info("[上级点播] 监听端口失败: {}->{}", ssrc, localPort);
+            return 0;
         }
-        return localPort;
     }
 
     /**

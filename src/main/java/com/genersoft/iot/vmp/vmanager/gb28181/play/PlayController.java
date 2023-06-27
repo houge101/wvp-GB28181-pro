@@ -26,7 +26,6 @@ import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
-import com.genersoft.iot.vmp.vmanager.bean.SnapPath;
 import com.genersoft.iot.vmp.vmanager.bean.StreamContent;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,7 +40,6 @@ import org.springframework.web.context.request.async.DeferredResult;
 import javax.servlet.http.HttpServletRequest;
 import javax.sip.InvalidArgumentException;
 import javax.sip.SipException;
-import java.io.File;
 import java.text.ParseException;
 import java.util.List;
 import java.util.UUID;
@@ -127,7 +125,7 @@ public class PlayController {
 				if (data != null) {
 					StreamInfo streamInfo = (StreamInfo)data;
 					if (userSetting.getUseSourceIpAsStreamIp()) {
-						streamInfo.channgeStreamIp(request.getLocalName());
+						streamInfo.channgeStreamIp(request.getLocalAddr());
 					}
 					wvpResult.setData(new StreamContent(streamInfo));
 				}
@@ -144,8 +142,9 @@ public class PlayController {
 	@Operation(summary = "停止点播")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
+	@Parameter(name = "isSubStream", description = "是否子码流（true-子码流，false-主码流），默认为false", required = true)
 	@GetMapping("/stop/{deviceId}/{channelId}")
-	public JSONObject playStop(@PathVariable String deviceId, @PathVariable String channelId) {
+	public JSONObject playStop(@PathVariable String deviceId, @PathVariable String channelId,boolean isSubStream) {
 
 		logger.debug(String.format("设备预览/回放停止API调用，streamId：%s_%s", deviceId, channelId ));
 
@@ -172,11 +171,12 @@ public class PlayController {
 			}
 		}
 		inviteStreamService.removeInviteInfoByDeviceAndChannel(InviteSessionType.PLAY, deviceId, channelId);
-
 		storager.stopPlay(deviceId, channelId);
+
 		JSONObject json = new JSONObject();
 		json.put("deviceId", deviceId);
 		json.put("channelId", channelId);
+		json.put("isSubStream", isSubStream);
 		return json;
 	}
 
@@ -343,8 +343,9 @@ public class PlayController {
 	@Operation(summary = "获取截图")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
+	@Parameter(name = "isSubStream", description = "是否子码流（true-子码流，false-主码流），默认为false", required = true)
 	@GetMapping("/snap")
-	public DeferredResult<String> getSnap(HttpServletRequest request, String deviceId, String channelId) {
+	public DeferredResult<String> getSnap(String deviceId, String channelId,boolean isSubStream) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("获取截图: {}/{}", deviceId, channelId);
 		}
@@ -357,16 +358,11 @@ public class PlayController {
 		RequestMessage message = new RequestMessage();
 		message.setKey(key);
 		message.setId(uuid);
-		String nowForUrl = DateUtil.getNowForUrl();
-		String fileName = deviceId + "_" + channelId + "_" + nowForUrl + ".jpg";
 
+		String fileName = deviceId + "_" + channelId + "_" + DateUtil.getNowForUrl() + "jpg";
 		playService.getSnap(deviceId, channelId, fileName, (code, msg, data) -> {
 			if (code == InviteErrorCode.SUCCESS.getCode()) {
-				File snapFile = new File((String)data);
-				String fileNameForUrl = deviceId + "/" + channelId + "?mark=" + nowForUrl;
-				String uri = request.getRequestURL().toString().replace(request.getRequestURI(), "/api/device/query/snap/" + fileNameForUrl);
-				SnapPath snapPath = SnapPath.getInstance((String) data, snapFile.getAbsolutePath(), uri);
-				message.setData(snapPath);
+				message.setData(data);
 			}else {
 				message.setData(WVPResult.fail(code, msg));
 			}

@@ -14,6 +14,8 @@ public interface IInviteStreamService {
      */
     void updateInviteInfo(InviteInfo inviteInfo);
 
+    InviteInfo updateInviteInfoForStream(InviteInfo inviteInfo, String stream);
+
     /**
      * 获取点播的状态信息
      */
@@ -70,4 +72,7 @@ public interface IInviteStreamService {
      * 统计同一个zlm下的国标收流个数
      */
     int getStreamInfoCount(String mediaServerId);
+
+
+
 }

@@ -599,18 +599,29 @@ public class RedisCatchStorageImpl implements IRedisCatchStorage {
     @Override
     public void sendDeviceOrChannelStatus(String deviceId, String channelId, boolean online) {
         String key = VideoManagerConstants.VM_MSG_SUBSCRIBE_DEVICE_STATUS;
-
         StringBuilder msg = new StringBuilder();
         msg.append(deviceId);
         if (channelId != null) {
             msg.append(":").append(channelId);
         }
         msg.append(" ").append(online? "ON":"OFF");
-        if (channelId == null) {
-            logger.info("[redis通知] 推送设备状态， {}", msg);
-        }else {
-            logger.info("[redis通知] 推送通道状态， {}", msg);
+        logger.info("[redis通知] 推送状态-> {} ", msg);
+        // 使用 RedisTemplate<Object, Object> 发送字符串消息会导致发送的消息多带了双引号
+        stringRedisTemplate.convertAndSend(key, msg.toString());
+    }
+
+    @Override
+    public void sendChannelAddOrDelete(String deviceId, String channelId, boolean add) {
+        String key = VideoManagerConstants.VM_MSG_SUBSCRIBE_DEVICE_STATUS;
+
+
+        StringBuilder msg = new StringBuilder();
+        msg.append(deviceId);
+        if (channelId != null) {
+            msg.append(":").append(channelId);
         }
+        msg.append(" ").append(add? "ADD":"DELETE");
+        logger.info("[redis通知] 推送通道-> {}", msg);
         // 使用 RedisTemplate<Object, Object> 发送字符串消息会导致发送的消息多带了双引号
         stringRedisTemplate.convertAndSend(key, msg.toString());
     }

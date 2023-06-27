@@ -85,6 +85,24 @@ public class InviteStreamServiceImpl implements IInviteStreamService {
     }
 
     @Override
+    public InviteInfo updateInviteInfoForStream(InviteInfo inviteInfo, String stream) {
+
+        InviteInfo inviteInfoInDb = getInviteInfo(inviteInfo.getType(), inviteInfo.getDeviceId(), inviteInfo.getChannelId(), inviteInfo.getStream());
+        if (inviteInfoInDb == null) {
+            return null;
+        }
+        removeInviteInfo(inviteInfoInDb);
+        String key = VideoManagerConstants.INVITE_PREFIX +
+                "_" + inviteInfo.getType() +
+                "_" + inviteInfo.getDeviceId() +
+                "_" + inviteInfo.getChannelId() +
+                "_" + stream;
+        inviteInfoInDb.setStream(stream);
+        redisTemplate.opsForValue().set(key, inviteInfoInDb);
+        return inviteInfoInDb;
+    }
+
+    @Override
     public InviteInfo getInviteInfo(InviteSessionType type, String deviceId, String channelId, String stream) {
         String key = VideoManagerConstants.INVITE_PREFIX +
                 "_" + (type != null ? type : "*") +
@@ -152,19 +170,6 @@ public class InviteStreamServiceImpl implements IInviteStreamService {
 
     }
 
-    @Override
-    public void call(InviteSessionType type, String deviceId, String channelId, String stream, int code, String msg, Object data) {
-        String key = buildKey(type, deviceId, channelId, stream);
-        List<ErrorCallback<Object>> callbacks = inviteErrorCallbackMap.get(key);
-        if (callbacks == null) {
-            return;
-        }
-        for (ErrorCallback<Object> callback : callbacks) {
-            callback.run(code, msg, data);
-        }
-        inviteErrorCallbackMap.remove(key);
-    }
-
     private String buildKey(InviteSessionType type, String deviceId, String channelId, String stream) {
         String key = type + "_" +  deviceId + "_" + channelId;
         // 如果ssrc未null那么可以实现一个通道只能一次操作，ssrc不为null则可以支持一个通道多次invite
@@ -197,5 +202,28 @@ public class InviteStreamServiceImpl implements IInviteStreamService {
             }
         }
         return count;
+    }
+
+    @Override
+    public void call(InviteSessionType type, String deviceId, String channelId, String stream, int code, String msg, Object data) {
+        String key = buildSubStreamKey(type, deviceId, channelId, stream);
+        List<ErrorCallback<Object>> callbacks = inviteErrorCallbackMap.get(key);
+        if (callbacks == null) {
+            return;
+        }
+        for (ErrorCallback<Object> callback : callbacks) {
+            callback.run(code, msg, data);
+        }
+        inviteErrorCallbackMap.remove(key);
+    }
+
+
+    private String buildSubStreamKey(InviteSessionType type, String deviceId, String channelId, String stream) {
+        String key = type + "_" + "_" +  deviceId + "_" + channelId;
+        // 如果ssrc为null那么可以实现一个通道只能一次操作，ssrc不为null则可以支持一个通道多次invite
+        if (stream != null) {
+            key += ("_" + stream);
+        }
+        return key;
     }
 }

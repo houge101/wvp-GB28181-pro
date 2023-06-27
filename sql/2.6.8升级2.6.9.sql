@@ -38,7 +38,7 @@ alter table device
     change geoCoordSys geo_coord_sys varchar(50) not null;
 
 alter table device
-    change treeType tree_type varchar(50) not null;
+    drop column treeType;
 
 alter table device
     change mediaServerId media_server_id varchar(50) default 'auto' null;
@@ -57,6 +57,10 @@ alter table device
 
 alter table device
     change online on_line varchar(50) null;
+
+alter table device
+    add COLUMN switch_primary_sub_stream bool default false comment '开启主子码流切换的开关（0-不开启，1-开启）现在已知支持设备为 大华、TP——LINK全系设备'
+
 
 alter table device_alarm
     change deviceId device_id varchar(50) not null;
@@ -297,7 +301,7 @@ alter table parent_platform
     change updateTime update_time varchar(50) null;
 
 alter table parent_platform
-    change treeType tree_type varchar(50) not null;
+    drop column treeType;
 
 alter table parent_platform
     change asMessageChannel as_message_channel bool default false;
