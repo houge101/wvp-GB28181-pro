@@ -327,7 +327,7 @@ public class OnvifServiceImpl implements IOnvifService {
         }
         HookSubscribeForStreamChange hookSubscribe = HookSubscribeFactory.on_stream_changed(app, stream, true, "rtsp", mediaServerItem.getId());
         // 添加订阅
-        subscribe.addSubscribe(hookSubscribe, (MediaServerItem mediaServerItemInUse, JSONObject json) -> {
+        subscribe.addSubscribe(hookSubscribe, (mediaServerItemInUse, hookParam) -> {
             logger.info("[播放ONVIF] 成功，通道ID：{}", channelId);
             subscribe.removeSubscribe(hookSubscribe);
             StreamInfo resultStreamInfo = mediaService.getStreamInfoByAppAndStream(mediaServerItem, app, stream, null, null);
