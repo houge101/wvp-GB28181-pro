@@ -12,7 +12,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.utils.SipUtils;
 import com.genersoft.iot.vmp.media.zlm.ZLMMediaListManager;
-import com.genersoft.iot.vmp.media.zlm.ZLMServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
 import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.dto.*;
 import com.genersoft.iot.vmp.media.zlm.dto.hook.OnStreamChangedHookParam;
@@ -91,7 +91,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
     private SIPSender sipSender;
 
     @Autowired
-    private ZLMServerFactory zlmServerFactory;
+    private ZLMRTPServerFactory zlmrtpServerFactory;
 
     @Autowired
     private IMediaServerService mediaServerService;
@@ -345,10 +345,8 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                         streamTypeStr = "UDP";
                     }
                     logger.info("[上级Invite] {}, 平台：{}， 通道：{}, 收流地址：{}:{}，收流方式：{}, ssrc：{}", sessionName, username, channelId, addressStr, port, streamTypeStr, ssrc);
-                    SendRtpItem sendRtpItem = zlmServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
-                            device.getDeviceId(), channelId, mediaTransmissionTCP, platform.isRtcp(), ssrcFromCallback -> {
-                                return redisCatchStorage.querySendRTPServer(platform.getServerGBId(), channelId, null, callIdHeader.getCallId()) != null;
-                            });
+                    SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
+                            device.getDeviceId(), channelId, mediaTransmissionTCP, platform.isRtcp());
 
                     if (tcpActive != null) {
                         sendRtpItem.setTcpActive(tcpActive);
@@ -550,13 +548,11 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                             CallIdHeader callIdHeader, MediaServerItem mediaServerItem,
                             int port, Boolean tcpActive, boolean mediaTransmissionTCP,
                             String channelId, String addressStr, String ssrc, String requesterId) {
-            Boolean streamReady = zlmServerFactory.isStreamReady(mediaServerItem, gbStream.getApp(), gbStream.getStream());
+            Boolean streamReady = zlmrtpServerFactory.isStreamReady(mediaServerItem, gbStream.getApp(), gbStream.getStream());
             if (streamReady != null && streamReady) {
                 // 自平台内容
-                SendRtpItem sendRtpItem = zlmServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
-                        gbStream.getApp(), gbStream.getStream(), channelId, mediaTransmissionTCP, platform.isRtcp(), ssrcFromCallback ->{
-                            return  redisCatchStorage.querySendRTPServer(platform.getServerGBId(), channelId, null, callIdHeader.getCallId()) != null;
-                        });
+                SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
+                        gbStream.getApp(), gbStream.getStream(), channelId, mediaTransmissionTCP, platform.isRtcp());
 
                 if (sendRtpItem == null) {
                     logger.warn("服务器端口资源不足");
@@ -591,13 +587,11 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                             String channelId, String addressStr, String ssrc, String requesterId) {
         // 推流
         if (streamPushItem.isSelf()) {
-            Boolean streamReady = zlmServerFactory.isStreamReady(mediaServerItem, gbStream.getApp(), gbStream.getStream());
+            Boolean streamReady = zlmrtpServerFactory.isStreamReady(mediaServerItem, gbStream.getApp(), gbStream.getStream());
             if (streamReady != null && streamReady) {
                 // 自平台内容
-                SendRtpItem sendRtpItem = zlmServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
-                        gbStream.getApp(), gbStream.getStream(), channelId, mediaTransmissionTCP, platform.isRtcp(), ssrcFromCallback ->{
-                            return  redisCatchStorage.querySendRTPServer(platform.getServerGBId(), channelId, null, callIdHeader.getCallId()) != null;
-                        });
+                SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
+                        gbStream.getApp(), gbStream.getStream(), channelId, mediaTransmissionTCP, platform.isRtcp());
 
                 if (sendRtpItem == null) {
                     logger.warn("服务器端口资源不足");
@@ -712,10 +706,8 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
             mediaListManager.addChannelOnlineEventLister(gbStream.getApp(), gbStream.getStream(), (app, stream, serverId) -> {
                 dynamicTask.stop(callIdHeader.getCallId());
                 if (serverId.equals(userSetting.getServerId())) {
-                    SendRtpItem sendRtpItem = zlmServerFactory.createSendRtpItem(mediaServerItem, addressStr, finalPort, ssrc, requesterId,
-                            app, stream, channelId, mediaTransmissionTCP, platform.isRtcp(), ssrcFromCallback -> {
-                                return redisCatchStorage.querySendRTPServer(platform.getServerGBId(), channelId, null, callIdHeader.getCallId()) != null;
-                            });
+                    SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, finalPort, ssrc, requesterId,
+                            app, stream, channelId, mediaTransmissionTCP, platform.isRtcp());
 
                     if (sendRtpItem == null) {
                         logger.warn("上级点时创建sendRTPItem失败，可能是服务器端口资源不足");
